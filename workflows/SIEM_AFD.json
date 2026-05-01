@@ -1,1 +1,34 @@
-{}
+{
+  "name": "SIEM_AFD_CY01",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "siem-logs",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "839e1804-932c-4a1a-83f4-c920c84e385d",
+      "name": "Webhook",
+      "webhookId": "34996648-ee23-4e45-a350-87f39d51befd"
+    }
+  ],
+  "pinData": {},
+  "connections": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "ba9e91b0-a4f7-453a-b57e-d0e213afcfb8",
+  "meta": {
+    "instanceId": "ff7a3bd349d71d4cf8a00fb5266fe6151a4ed41cee843802865f349bcf1e5fba"
+  },
+  "id": "YLeEHdbUlAg6UwuJ",
+  "tags": []
+}
