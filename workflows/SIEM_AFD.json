@@ -16,16 +16,133 @@
       "id": "839e1804-932c-4a1a-83f4-c920c84e385d",
       "name": "Webhook",
       "webhookId": "34996648-ee23-4e45-a350-87f39d51befd"
+    },
+    {
+      "parameters": {
+        "jsCode": "const event = $input.first().json.body || $input.first().json;\nconst type  = event.type  || \"inconnu\";\nconst ip    = event.ip    || \"0.0.0.0\";\n\n// Simulation directe selon le type reçu\nlet etat_apres = \"q0\";\nlet alerte = false;\n\nif (type === \"priv_escalation\") {\n  etat_apres = \"q3\";\n  alerte = true;\n} else if (type === \"port_scan\") {\n  etat_apres = \"q2\";\n} else if (type === \"auth_fail\") {\n  etat_apres = \"q1\";\n}\n\nreturn [{ json: {\n  ip         : ip,\n  type       : type,\n  etat_avant : \"q0\",\n  etat_apres : etat_apres,\n  alerte     : alerte,\n  timestamp  : new Date().toISOString()\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "28f83e0b-64ca-443e-8aa6-c4e6b2246607",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "a378002e-ff43-4d4c-9d05-d56cae8f3b9c",
+              "leftValue": "={{ $json.alerte }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        416,
+        0
+      ],
+      "id": "071a2605-8e84-4cfb-a0fd-af82cca50232",
+      "name": "If"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        592,
+        112
+      ],
+      "id": "9b194457-3c21-4ff5-bf49-f04ac5e0ad9b",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://webhook.site/0ce6ef44-b3fc-4472-a920-a4c748957ef5",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"incident_type\": \"brute_force\",\n  \"ip\": \"{{ $json.ip }}\",\n  \"etat_siem\": \"{{ $json.etat_apres }}\",\n  \"timestamp\": \"{{ $json.timestamp }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        608,
+        -112
+      ],
+      "id": "22c09cd7-f54b-412b-b5d9-05edbcdc148a",
+      "name": "HTTP Request"
     }
   ],
   "pinData": {},
-  "connections": {},
-  "active": false,
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
   "settings": {
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "ba9e91b0-a4f7-453a-b57e-d0e213afcfb8",
+  "versionId": "5374f52e-1e0b-4283-abab-1f1ec31f970c",
   "meta": {
     "instanceId": "ff7a3bd349d71d4cf8a00fb5266fe6151a4ed41cee843802865f349bcf1e5fba"
   },
