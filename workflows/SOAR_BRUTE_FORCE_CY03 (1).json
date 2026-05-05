@@ -1,0 +1,299 @@
+{
+  "name": "SOAR_BRUTE_FORCE_CY03",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "soar-trigger",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "1e61b027-dbd8-496c-98b6-a0e4eeeba25f",
+      "name": "Webhook",
+      "webhookId": "68edbe09-36fb-4ce2-81dd-6fe3c3b7828d"
+    },
+    {
+      "parameters": {
+        "from": "whatsapp:+14155238886",
+        "to": "whatsapp:+212633626450",
+        "message": "🚨 INCIDENT {{ $json.incident_id }} État AFD : q2 - Incident confirmé IP source : {{ $json.ip_source }} Type : Brute Force SSH Heure : {{ $json.heure_debut }} --- Répondez OUI pour autoriser le blocage IP Répondez NON pour escalade manuelle",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [
+        416,
+        0
+      ],
+      "id": "eceb68c1-27f0-4d65-875c-3d6f1b9b7b8f",
+      "name": "Send an SMS/MMS/WhatsApp message",
+      "credentials": {
+        "twilioApi": {
+          "id": "34qpXE3tJDPgU0NE",
+          "name": "Twilio account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "734b21d6-357a-4c8f-a7c9-4be3a9ee8c89",
+              "leftValue": "={{ $json.body.reponse }}",
+              "rightValue": "OUI",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        832,
+        0
+      ],
+      "id": "bdaabad7-c035-49fd-a3f7-3c0e6bf6fa25",
+      "name": "If"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1040,
+        96
+      ],
+      "id": "371a9f74-5986-454f-8ae3-2f2f57b0c904",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "34a4dcfc-f7f0-4121-a6b4-065fdc91c1fd",
+              "name": "incident_id",
+              "value": "=INC_{{ $now.format(\"yyyyMMddHHmmss\") }}",
+              "type": "string"
+            },
+            {
+              "id": "c3d883e4-8ceb-4332-ae6b-642c170b4e49",
+              "name": "etat",
+              "value": "q1_Triage",
+              "type": "string"
+            },
+            {
+              "id": "f4ee6871-5868-4b6b-8d6e-8b464d27a2a8",
+              "name": "ip_source",
+              "value": "={{ $json.ip }}",
+              "type": "string"
+            },
+            {
+              "id": "e988080f-19bd-48b0-86ac-e2ecfa6f5092",
+              "name": "type",
+              "value": "={{ $json.incident_type }}\n",
+              "type": "string"
+            },
+            {
+              "id": "413fffc3-9c85-461e-92c0-e9cca73957c5",
+              "name": "heure_debut",
+              "value": "={{ $now.toISO() }}\n",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        208,
+        0
+      ],
+      "id": "f9ba9fe8-9718-49c8-9379-0afe1f7d1ab1",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "amount": 1
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        624,
+        0
+      ],
+      "id": "9fe6f871-db07-400f-b290-2218eb260fc0",
+      "name": "Wait",
+      "webhookId": "19675948-1529-485d-b7b8-18881543a192"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://httpbin.org/post",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "action",
+              "value": "block_ip"
+            },
+            {
+              "name": "ip",
+              "value": "={{ $json.ip_source }}"
+            },
+            {
+              "name": "incident_id",
+              "value": "={{ $json.incident_id }}"
+            },
+            {
+              "name": "reason",
+              "value": "Brute Force SSH détecté par SIEM AFD"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1040,
+        -80
+      ],
+      "id": "17f6d464-ef73-4e9b-aa88-853c390b3287",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "from": "+14155238886",
+        "to": "+212633626450",
+        "toWhatsapp": true,
+        "message": "=✅ INCIDENT {{ $json.incident_id }} CLÔTURÉ\nÉtat final AFD : q6 - Clôturé\nIP bloquée : {{ $json.ip_source }}\nAction : Blocage firewall confirmé\nRapport post-incident généré automatiquement.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [
+        1248,
+        -80
+      ],
+      "id": "e612e5ad-9924-4059-bdbf-faaa8dbc1893",
+      "name": "Send an SMS/MMS/WhatsApp message1",
+      "credentials": {
+        "twilioApi": {
+          "id": "34qpXE3tJDPgU0NE",
+          "name": "Twilio account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send an SMS/MMS/WhatsApp message": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Send an SMS/MMS/WhatsApp message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Send an SMS/MMS/WhatsApp message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "03e037b6-3c70-4bbe-b739-75e02709d0b7",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ff7a3bd349d71d4cf8a00fb5266fe6151a4ed41cee843802865f349bcf1e5fba"
+  },
+  "id": "AH2mYvZuttTsWNlW",
+  "tags": []
+}

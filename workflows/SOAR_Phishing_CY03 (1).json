@@ -1,0 +1,368 @@
+{
+  "name": "SOAR_Phishing_CY03",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "soar-phishing-trigger",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "80868e5f-0466-443e-bff1-9b2db4d01689",
+      "name": "Webhook",
+      "webhookId": "5d2128ed-0581-4c69-831b-16312f89e7d3"
+    },
+    {
+      "parameters": {
+        "from": "whatsapp:+14155238886",
+        "to": "whatsapp:+212633626450",
+        "message": "=🎣 INCIDENT PHISHING {{ $json.incident_id }}\nUtilisateur ciblé : {{ $json.user }}\nLien malveillant  : {{ $json.url }}\nIP origine        : {{ $json.ip }}\n---\nOUI = Isoler le poste immédiatement\nNON = Escalade direction sécurité",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [
+        416,
+        0
+      ],
+      "id": "508d4437-afaa-4213-bf95-2083fa0353b4",
+      "name": "Send an SMS/MMS/WhatsApp message",
+      "credentials": {
+        "twilioApi": {
+          "id": "34qpXE3tJDPgU0NE",
+          "name": "Twilio account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "734b21d6-357a-4c8f-a7c9-4be3a9ee8c89",
+              "leftValue": "={{$json.Body}}",
+              "rightValue": "OUI",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        832,
+        0
+      ],
+      "id": "6fc5eca3-5333-4e59-8439-a2d3db2e71fa",
+      "name": "If"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1040,
+        96
+      ],
+      "id": "904fda65-439f-421c-a81d-998525551373",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "34a4dcfc-f7f0-4121-a6b4-065fdc91c1fd",
+              "name": "incident_id",
+              "value": "=INC_{{ $now.format(\"yyyyMMddHHmmss\") }}",
+              "type": "string"
+            },
+            {
+              "id": "c3d883e4-8ceb-4332-ae6b-642c170b4e49",
+              "name": "etat",
+              "value": "q1_Triage",
+              "type": "string"
+            },
+            {
+              "id": "f4ee6871-5868-4b6b-8d6e-8b464d27a2a8",
+              "name": "ip_source",
+              "value": "={{ $json.ip }}",
+              "type": "string"
+            },
+            {
+              "id": "e988080f-19bd-48b0-86ac-e2ecfa6f5092",
+              "name": "type",
+              "value": "={{ $json.incident_type }}\n",
+              "type": "string"
+            },
+            {
+              "id": "413fffc3-9c85-461e-92c0-e9cca73957c5",
+              "name": "heure_debut",
+              "value": "={{ $now.toISO() }}\n",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        208,
+        0
+      ],
+      "id": "ddd9698b-5342-43ea-a088-2bdf63169b1f",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "amount": 1
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        624,
+        0
+      ],
+      "id": "809a8e95-7199-4226-be28-2429cae1128e",
+      "name": "Wait",
+      "webhookId": "4e70fc60-6bcb-4b0e-8a09-4fd3076401ee"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://edr-simule.local/api/isolate",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "host",
+              "value": "={{ $json.user }}"
+            },
+            {
+              "name": "action",
+              "value": "isolate"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1040,
+        -80
+      ],
+      "id": "32809695-ad1b-43fd-aeb1-ac19b4539b14",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://exchange-simule.local/api/purge",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "user",
+              "value": "={{ $json.user }}"
+            },
+            {
+              "name": "url ",
+              "value": "={{ $json.url }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1248,
+        -80
+      ],
+      "id": "a31f6ce8-1950-4547-b62e-34e5e8abd2de",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://av-simule.local/api/scan",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "host",
+              "value": "={{ $json.user }}"
+            },
+            {
+              "name": "action ",
+              "value": "full_scan"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1456,
+        -80
+      ],
+      "id": "02f94d4a-1373-4a5a-b8d2-382e38651581",
+      "name": "HTTP Request2"
+    },
+    {
+      "parameters": {
+        "from": "whatsapp:+14155238886",
+        "to": "whatsapp:+212633626450",
+        "message": "=✅ INCIDENT {{ $json.incident_id }} CLÔTURÉ État final AFD : q6 - Clôturé IP bloquée : {{ $json.ip_source }} Action : Blocage firewall confirmé Rapport post-incident généré automatiquement.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [
+        1664,
+        -80
+      ],
+      "id": "66b15f40-7065-45a3-9030-6c537945a58d",
+      "name": "Send an SMS/MMS/WhatsApp message1",
+      "credentials": {
+        "twilioApi": {
+          "id": "34qpXE3tJDPgU0NE",
+          "name": "Twilio account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send an SMS/MMS/WhatsApp message": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Send an SMS/MMS/WhatsApp message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request2": {
+      "main": [
+        [
+          {
+            "node": "Send an SMS/MMS/WhatsApp message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "83819b90-f03e-4665-8bbe-22ec313fc7d3",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ff7a3bd349d71d4cf8a00fb5266fe6151a4ed41cee843802865f349bcf1e5fba"
+  },
+  "id": "CdX2Xo2uDNRhe4tu",
+  "tags": []
+}
